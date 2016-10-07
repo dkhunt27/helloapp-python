@@ -1,0 +1,39 @@
+language: python
+
+python:
+  - 3.5
+
+branches:
+  only:
+    - master
+
+env:
+  global:
+    - DOCKER_REGISTRY=ttrahan
+    - DOCKER_IMAGE_NAME=helloapp-python
+    - DOCKER_IMAGE_VERSION=$BRANCH.$SHIPPABLE_BUILD_NUMBER
+
+build:
+  ci:
+    - sed -i "s/{VERSION_NUMBER}/${DOCKER_IMAGE_VERSION}/" app.py
+    - . build.sh
+
+  post_ci:
+    - . push.sh
+
+integrations:
+  hub:
+    - integrationName: ttrahan-dh
+      type: docker
+
+  notifications:
+    - integrationName: trigger-pipeline-helloapp-python
+      type: webhook
+      payload:
+        - versionName=$BRANCH.$SHIPPABLE_BUILD_NUMBER
+      branches:
+        only:
+          - github
+      on_success: always
+      on_failure: never
+      on_start: never
